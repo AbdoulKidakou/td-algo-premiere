@@ -1,0 +1,480 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>TD Algorithme Première</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Concept : une feuille de TD en colonne unique, chaque exercice est un bloc à vérifier séparément, le score se cumule en haut. */
+:root{
+  --bg:#F3F6FA; --surface:#FFFFFF; --fg:#14202E; --muted:#51606F; --line:#CCD6E2;
+  --accent:#1F4E79; --accent-fg:#FFFFFF; --code-bg:#EAF1F8; --field:#F7FAFD;
+  --ok:#1E7B45; --ok-bg:#E3F4EA; --ko:#B3261E; --ko-bg:#FBE9E7; --focus:#0B63CE;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F151C; --surface:#17202A; --fg:#E6ECF2; --muted:#9AAABA; --line:#2C3A49;
+    --accent:#7DB1E6; --accent-fg:#0B1722; --code-bg:#1C2937; --field:#101A24;
+    --ok:#6FD39A; --ok-bg:#15301F; --ko:#FF8A80; --ko-bg:#3A1A18; --focus:#8CC2FF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F151C; --surface:#17202A; --fg:#E6ECF2; --muted:#9AAABA; --line:#2C3A49;
+  --accent:#7DB1E6; --accent-fg:#0B1722; --code-bg:#1C2937; --field:#101A24;
+  --ok:#6FD39A; --ok-bg:#15301F; --ko:#FF8A80; --ko-bg:#3A1A18; --focus:#8CC2FF; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17px;line-height:1.5;
+  padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:760px;margin-inline:auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-direction:column;gap:6px}
+.school{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-size:clamp(26px,6vw,38px);line-height:1.1;margin:0;color:var(--accent);text-wrap:balance}
+.meta{color:var(--muted);font-size:15px}
+.meta b{color:var(--fg)}
+.who{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:6px}
+.who label{font-weight:600}
+.who input{flex:1 1 220px;min-width:0}
+input[type=text],textarea{font:inherit;font-family:var(--f-mono);font-size:16px;color:var(--fg);background:var(--field);
+  border:1.5px solid var(--line);border-radius:6px;padding:6px 9px;width:100%;min-width:0}
+textarea{resize:vertical;line-height:1.45;min-height:130px}
+input[type=text]:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible,input[type=checkbox]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.score{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.score .big{font-family:var(--f-display);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.score .big small{font-size:16px;color:var(--muted);font-weight:600}
+.score .sub{color:var(--muted);font-size:14px}
+.bar{flex:1 1 100%;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+.how{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.how h2{font-family:var(--f-display);font-size:18px;margin:0 0 8px}
+pre.code{font-family:var(--f-mono);font-size:14.5px;line-height:1.5;background:var(--code-bg);border:1px solid var(--line);
+  border-radius:6px;padding:10px 12px;margin:8px 0;overflow-x:auto;white-space:pre}
+.how p{margin:8px 0 0}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ex>.hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;background:var(--accent);color:var(--accent-fg);padding:9px 16px}
+.ex>.hd h2{font-family:var(--f-display);font-size:18px;margin:0}
+.ex>.hd .pts{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.ex .bd{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.ex p{margin:0}
+.q{font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.row .f{display:flex;align-items:center;gap:6px;flex:1 1 130px;min-width:0}
+.row .f span{font-weight:600;font-family:var(--f-mono)}
+.checks{display:flex;flex-direction:column;gap:6px}
+.checks label{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px;border:1.5px solid transparent;cursor:pointer}
+.checks input{width:20px;height:20px;margin-top:3px;flex:none;accent-color:var(--accent)}
+.order{display:flex;gap:8px;flex-wrap:wrap}
+.order .f{flex:0 0 52px;display:flex;flex-direction:column;gap:3px;align-items:center;font-size:13px;color:var(--muted)}
+.order input{text-align:center;padding-inline:4px;text-transform:uppercase}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:420px}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:left}
+th{background:var(--code-bg)}
+td code{font-family:var(--f-mono);font-size:14.5px}
+td input{text-align:center}
+.ok{border-color:var(--ok)!important;background:var(--ok-bg)!important}
+.ko{border-color:var(--ko)!important;background:var(--ko-bg)!important}
+.actions{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+button{font:inherit;font-weight:600;border-radius:8px;padding:8px 16px;cursor:pointer;border:1.5px solid var(--accent)}
+.btn-main{background:var(--accent);color:var(--accent-fg)}
+.btn-alt{background:transparent;color:var(--accent)}
+.res{font-weight:700;font-variant-numeric:tabular-nums}
+.res.good{color:var(--ok)}.res.bad{color:var(--ko)}.res.mid{color:var(--fg)}
+.msg{color:var(--muted);font-size:15px}
+details.corr{border:1px dashed var(--ok);border-radius:8px;background:var(--ok-bg);padding:8px 12px}
+details.corr summary{cursor:pointer;font-weight:700;color:var(--ok)}
+details.corr .in{padding-top:8px;display:flex;flex-direction:column;gap:6px;color:var(--fg)}
+details.corr pre.code{margin:2px 0}
+.hint{font-size:14px;color:var(--muted)}
+.final{display:flex;flex-wrap:wrap;gap:10px}
+.refs{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.refs h2{font-family:var(--f-display);font-size:20px;margin:0 0 10px}
+.refs ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.refs li b{display:block}
+.refs a{color:var(--accent);word-break:break-all;font-size:14.5px}
+footer{color:var(--muted);font-size:14px;text-align:center}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="school">Lycée Classique et Moderne de Ngaoundéré · Département d'informatique</div>
+    <h1>TD : construire un algorithme simple</h1>
+    <div class="meta">Classe de Première · Algorithmique · Enseignant : <b>Abdoul Wahabou K.</b></div>
+    <div class="who">
+      <label for="nom">Nom et prénom</label>
+      <input type="text" id="nom" autocomplete="name" style="font-family:var(--f-body)">
+    </div>
+  </header>
+
+  <div class="score" role="status" aria-live="polite">
+    <div class="big"><span id="tot">0</span> <small>/ 20</small></div>
+    <div class="sub" id="sub">Aucun exercice vérifié pour l'instant</div>
+    <div class="bar" aria-hidden="true"><i id="barfill"></i></div>
+  </div>
+
+  <section class="how">
+    <h2>Rappel : structure d'un algorithme séquentiel</h2>
+<pre class="code">Algorithme NomDeLAlgorithme
+Constante  NOM = valeur            (facultatif)
+Variables  x, y : Entier           (nom + type)
+Début
+    Lire(x)                        (entrée)
+    y ← x * 2                      (affectation)
+    Afficher("Résultat : ", y)     (sortie)
+Fin</pre>
+    <p><b>Démarche :</b> ① données d'entrée ② résultat attendu ③ formule ou traitement ④ écriture, puis test avec des valeurs.</p>
+    <p class="hint">Pour la flèche ←, tapez <b>&lt;-</b> au clavier : elle est acceptée partout.</p>
+  </section>
+
+  <!-- EXERCICE 1 -->
+  <section class="ex" id="ex1">
+    <div class="hd"><h2>Exercice 1 · Vocabulaire</h2><span class="pts">3 points</span></div>
+    <div class="bd">
+      <p><span class="q">a)</span> Complétez : « Un algorithme est une <b>(1)</b> finie d'<b>(2)</b> permettant de résoudre un <b>(3)</b>. »</p>
+      <div class="row">
+        <div class="f"><span>(1)</span><input type="text" id="e1a" aria-label="mot 1" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>(2)</span><input type="text" id="e1b" aria-label="mot 2" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>(3)</span><input type="text" id="e1c" aria-label="mot 3" autocomplete="off" autocapitalize="none"></div>
+      </div>
+      <p><span class="q">b)</span> Cochez les affirmations <b>vraies</b> :</p>
+      <div class="checks" id="e1checks">
+        <label><input type="checkbox"> Une variable peut changer de valeur pendant l'exécution de l'algorithme.</label>
+        <label><input type="checkbox"> Une constante peut être modifiée par une instruction d'affectation.</label>
+        <label><input type="checkbox"> Un algorithme s'écrit entre les mots-clés Début et Fin.</label>
+        <label><input type="checkbox"> L'instruction Lire(x) permet d'afficher la valeur de x à l'écran.</label>
+      </div>
+      <div class="actions"><button class="btn-main" data-check="1">Vérifier</button><span class="res" id="r1"></span></div>
+      <p class="msg" id="m1"></p>
+      <details class="corr" id="c1" hidden><summary>Voir la correction</summary><div class="in">
+        <p>a) suite · instructions · problème.</p>
+        <p>b) Vraies : 1 et 3. Une constante garde sa valeur. Lire sert à saisir une donnée : c'est Afficher qui écrit à l'écran.</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 2 -->
+  <section class="ex" id="ex2">
+    <div class="hd"><h2>Exercice 2 · Remettre dans l'ordre</h2><span class="pts">2 points</span></div>
+    <div class="bd">
+      <p>Les instructions de l'algorithme <b>Somme</b> (lit deux nombres, affiche leur somme) sont mélangées. Écrivez les lettres dans l'ordre d'exécution. « Fin » termine l'algorithme et n'est pas dans la liste.</p>
+<pre class="code">A.  Afficher("La somme est : ", S)
+B.  S ← a + b
+C.  Lire(a, b)
+D.  Début
+E.  Afficher("Entrez deux nombres")</pre>
+      <div class="order" id="e2order">
+        <div class="f">1<input type="text" id="e2_0" maxlength="1" aria-label="instruction 1" autocomplete="off"></div>
+        <div class="f">2<input type="text" id="e2_1" maxlength="1" aria-label="instruction 2" autocomplete="off"></div>
+        <div class="f">3<input type="text" id="e2_2" maxlength="1" aria-label="instruction 3" autocomplete="off"></div>
+        <div class="f">4<input type="text" id="e2_3" maxlength="1" aria-label="instruction 4" autocomplete="off"></div>
+        <div class="f">5<input type="text" id="e2_4" maxlength="1" aria-label="instruction 5" autocomplete="off"></div>
+      </div>
+      <div class="actions"><button class="btn-main" data-check="2">Vérifier</button><span class="res" id="r2"></span></div>
+      <p class="msg" id="m2"></p>
+      <details class="corr" id="c2" hidden><summary>Voir la correction</summary><div class="in">
+        <p>Ordre : <b>D, E, C, B, A</b>.</p>
+        <p>On commence par Début, on invite l'utilisateur (E), on lit les valeurs (C), on calcule (B), puis on affiche (A).</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 3 -->
+  <section class="ex" id="ex3">
+    <div class="hd"><h2>Exercice 3 · Exécuter pas à pas</h2><span class="pts">4 points</span></div>
+    <div class="bd">
+<pre class="code">Algorithme Trace
+Variables a, b, c : Entier
+Début
+    a ← 5
+    b ← 3
+    c ← a + b
+    a ← 2
+    c ← b - a
+    Afficher(a, b, c)
+Fin</pre>
+      <p><span class="q">a)</span> Valeur de chaque variable <b>après</b> l'instruction. Écrivez <b>?</b> si la variable n'a pas encore de valeur.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Instruction</th><th>a</th><th>b</th><th>c</th></tr></thead>
+        <tbody id="e3body"></tbody>
+      </table></div>
+      <p><span class="q">b)</span> Que s'affiche-t-il à l'écran ? (a, b, c dans cet ordre)</p>
+      <div class="row"><div class="f" style="max-width:260px"><input type="text" id="e3out" aria-label="affichage final" autocomplete="off"></div></div>
+      <div class="actions"><button class="btn-main" data-check="3">Vérifier</button><span class="res" id="r3"></span></div>
+      <p class="msg" id="m3"></p>
+      <details class="corr" id="c3" hidden><summary>Voir la correction</summary><div class="in">
+        <div class="tw"><table>
+          <thead><tr><th>Instruction</th><th>a</th><th>b</th><th>c</th></tr></thead>
+          <tbody>
+            <tr><td><code>a ← 5</code></td><td>5</td><td>?</td><td>?</td></tr>
+            <tr><td><code>b ← 3</code></td><td>5</td><td>3</td><td>?</td></tr>
+            <tr><td><code>c ← a + b</code></td><td>5</td><td>3</td><td>8</td></tr>
+            <tr><td><code>a ← 2</code></td><td>2</td><td>3</td><td>8</td></tr>
+            <tr><td><code>c ← b - a</code></td><td>2</td><td>3</td><td>1</td></tr>
+          </tbody></table></div>
+        <p>Affichage : <b>2 3 1</b>. La nouvelle valeur d'une variable remplace l'ancienne ; c garde 8 jusqu'à la dernière affectation (c ← 3 − 2 = 1).</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 4 -->
+  <section class="ex" id="ex4">
+    <div class="hd"><h2>Exercice 4 · Compléter : prix TTC</h2><span class="pts">3 points</span></div>
+    <div class="bd">
+      <p>Le prix TTC se calcule à partir du prix hors taxes (HT) et de la TVA (19,25 % au Cameroun). Complétez les 4 trous :</p>
+<pre class="code">Algorithme PrixTTC
+Constante TVA = 0,1925
+Variables PHT, TTC : Réel
+Début
+    Afficher("Entrez le prix HT en FCFA :")
+    ......(1)......(PHT)
+    TTC ......(2)...... PHT * (1 + ......(3)......)
+    Afficher("Prix TTC : ", ......(4)......)
+Fin</pre>
+      <div class="row">
+        <div class="f"><span>(1)</span><input type="text" id="e4_1" aria-label="trou 1" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>(2)</span><input type="text" id="e4_2" aria-label="trou 2" autocomplete="off"></div>
+        <div class="f"><span>(3)</span><input type="text" id="e4_3" aria-label="trou 3" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>(4)</span><input type="text" id="e4_4" aria-label="trou 4" autocomplete="off" autocapitalize="none"></div>
+      </div>
+      <p><b>Test :</b> si PHT = 10 000 FCFA, quel prix TTC est affiché ?</p>
+      <div class="row"><div class="f" style="max-width:260px"><input type="text" id="e4test" inputmode="decimal" aria-label="prix TTC" autocomplete="off"></div></div>
+      <div class="actions"><button class="btn-main" data-check="4">Vérifier</button><span class="res" id="r4"></span></div>
+      <p class="msg" id="m4"></p>
+      <details class="corr" id="c4" hidden><summary>Voir la correction</summary><div class="in">
+        <p>(1) Lire · (2) ← · (3) TVA · (4) TTC.</p>
+        <p>Calcul : 10 000 × 1,1925 = <b>11 925 FCFA</b>.</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 5 -->
+  <section class="ex" id="ex5">
+    <div class="hd"><h2>Exercice 5 · Échanger deux variables</h2><span class="pts">3 points</span></div>
+    <div class="bd">
+      <p>Soient deux variables entières <code>a = 7</code> et <code>b = 12</code>. À la fin, a doit contenir 12 et b doit contenir 7.</p>
+      <p><span class="q">a)</span> Un élève propose : <code>a ← b</code> puis <code>b ← a</code>. Valeurs finales de a et b ? La proposition est-elle correcte (oui / non) ?</p>
+      <div class="row">
+        <div class="f"><span>a =</span><input type="text" id="e5a" inputmode="numeric" aria-label="valeur finale de a" autocomplete="off"></div>
+        <div class="f"><span>b =</span><input type="text" id="e5b" inputmode="numeric" aria-label="valeur finale de b" autocomplete="off"></div>
+        <div class="f"><input type="text" id="e5c" placeholder="oui / non" aria-label="proposition correcte" autocomplete="off" autocapitalize="none"></div>
+      </div>
+      <p><span class="q">b)</span> Écrivez une suite d'instructions correcte (une variable auxiliaire <code>temp</code> est permise). Une instruction par ligne.</p>
+      <textarea id="e5swap" rows="5" spellcheck="false" aria-label="instructions pour échanger a et b" placeholder="Variables a, b, temp : Entier&#10;temp <- a&#10;..."></textarea>
+      <div class="actions"><button class="btn-main" data-check="5">Vérifier</button><span class="res" id="r5"></span></div>
+      <p class="msg" id="m5"></p>
+      <details class="corr" id="c5" hidden><summary>Voir la correction</summary><div class="in">
+        <p>a) a = 12 et b = 12 : la proposition est fausse. Après a ← b, l'ancienne valeur de a (7) est perdue.</p>
+<pre class="code">Variables a, b, temp : Entier
+temp ← a
+a ← b
+b ← temp</pre>
+        <p>Il faut sauvegarder la valeur de a dans temp avant de l'écraser.</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 6 -->
+  <section class="ex" id="ex6">
+    <div class="hd"><h2>Exercice 6 · Construire un algorithme</h2><span class="pts">5 points</span></div>
+    <div class="bd">
+      <p><b>Énoncé :</b> un élève a deux notes sur 20 : Mathématiques (coefficient 4) et Informatique (coefficient 3). Écrire un algorithme qui lit les deux notes et affiche la moyenne pondérée.</p>
+      <p class="q">① Données d'entrée (noms et types)</p>
+      <input type="text" id="e6_1" placeholder="ex. : x, y : Entier" aria-label="données d'entrée" autocomplete="off" autocapitalize="none">
+      <p class="q">② Résultat attendu</p>
+      <input type="text" id="e6_2" aria-label="résultat attendu" autocomplete="off" autocapitalize="none">
+      <p class="q">③ Formule</p>
+      <input type="text" id="e6_3" aria-label="formule" autocomplete="off" autocapitalize="none">
+      <p class="q">④ Algorithme complet</p>
+      <textarea id="e6_4" rows="9" spellcheck="false" aria-label="algorithme complet" placeholder="Algorithme ...&#10;Variables ...&#10;Début&#10;   ...&#10;Fin"></textarea>
+      <p class="q">⑤ Test : pour noteM = 12 et noteI = 15, la moyenne affichée (arrondie au centième)</p>
+      <div class="row"><div class="f" style="max-width:260px"><input type="text" id="e6_5" inputmode="decimal" aria-label="moyenne pour le test" autocomplete="off"></div></div>
+      <div class="actions"><button class="btn-main" data-check="6">Vérifier</button><span class="res" id="r6"></span></div>
+      <p class="msg" id="m6"></p>
+      <p class="hint">La vérification de l'algorithme repère les éléments attendus (déclarations, saisies, calcul avec parenthèses, affichage). Elle ne remplace pas la relecture du professeur.</p>
+      <details class="corr" id="c6" hidden><summary>Voir la correction</summary><div class="in">
+        <p>① noteM, noteI : Réel · ② la moyenne pondérée (moy : Réel) · ③ moy = (noteM*4 + noteI*3) / 7</p>
+<pre class="code">Algorithme MoyennePonderee
+Variables noteM, noteI, moy : Réel
+Début
+    Afficher("Note de Maths ?")
+    Lire(noteM)
+    Afficher("Note d'Informatique ?")
+    Lire(noteI)
+    moy ← (noteM * 4 + noteI * 3) / 7
+    Afficher("Moyenne : ", moy)
+Fin</pre>
+        <p>⑤ (12×4 + 15×3) / 7 = 93 / 7 ≈ <b>13,29</b>. Erreur fréquente : oublier les parenthèses (noteM*4 + noteI*3 / 7).</p>
+      </div></details>
+    </div>
+  </section>
+
+  <div class="final">
+    <button class="btn-main" id="all">Tout vérifier</button>
+    <button class="btn-alt" id="reset">Recommencer</button>
+  </div>
+
+  <section class="refs">
+    <h2>Pour aller plus loin</h2>
+    <ul>
+      <li><b>Cours gratuit : OpenClassrooms, « Découvrez le fonctionnement des algorithmes »</b>Niveau facile, environ 6 h, en libre accès.<br><a href="https://openclassrooms.com/fr/courses/7527306-decouvrez-le-fonctionnement-des-algorithmes" target="_blank" rel="noopener">openclassrooms.com/fr/courses/7527306-decouvrez-le-fonctionnement-des-algorithmes</a></li>
+      <li><b>Entraînement en ligne : France-IOI</b>Exercices d'algorithmique corrigés automatiquement, à son rythme, en Python ou en C.<br><a href="https://www.france-ioi.org/algo/chapters.php" target="_blank" rel="noopener">france-ioi.org/algo/chapters.php</a></li>
+      <li><b>Exercices sur les variables : Université de Tours</b>Introduction à l'algorithmique avec des exercices de suivi de valeurs, comme l'exercice 3.<br><a href="https://www.math.univ-tours.fr/files/semaine1_algo.pdf" target="_blank" rel="noopener">math.univ-tours.fr/files/semaine1_algo.pdf</a></li>
+      <li><b>Vidéos : Elephorm, « Apprendre l'algorithmique, les fondamentaux »</b>Leçons vidéo sur les variables, les constantes et la structure d'un algorithme (formation payante).<br><a href="https://www.elephorm.com/formation/code/algorithmique/apprendre-lalgorithmique" target="_blank" rel="noopener">elephorm.com/formation/code/algorithmique/apprendre-lalgorithmique</a></li>
+    </ul>
+  </section>
+
+  <footer>TD d'algorithmique · Première · Abdoul Wahabou K. · Lycée Classique et Moderne de Ngaoundéré</footer>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var norm = function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); };
+  var r25 = function(v){ return Math.round(v*4)/4; };
+  var fmt = function(v){ return String(v).replace('.',','); };
+  function mark(el, ok){ el.classList.remove('ok','ko'); el.classList.add(ok?'ok':'ko'); }
+  function clearMarks(root){ root.querySelectorAll('.ok,.ko').forEach(function(e){ e.classList.remove('ok','ko'); }); }
+  function num(s){ var t=String(s||'').replace(/[^\d,.\-]/g,'').replace(',','.'); return t===''?NaN:parseFloat(t); }
+
+  // tableau de l'exercice 3
+  var trace = [['a ← 5','5','?','?'],['b ← 3','5','3','?'],['c ← a + b','5','3','8'],['a ← 2','2','3','8'],['c ← b - a','2','3','1']];
+  var tb = $('e3body');
+  trace.forEach(function(row,i){
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td><code>'+row[0]+'</code></td>' + [0,1,2].map(function(j){
+      return '<td><input type="text" id="t'+i+j+'" aria-label="'+['a','b','c'][j]+' après '+row[0]+'" autocomplete="off" maxlength="4"></td>';
+    }).join('');
+    tb.appendChild(tr);
+  });
+
+  var MAX = {1:3,2:2,3:4,4:3,5:3,6:5};
+  var got = {};
+
+  var checks = {
+    1: function(){
+      var pts=0, ok;
+      var want = {e1a:['suite'], e1b:['instructions','instruction'], e1c:['probleme','problemes']};
+      Object.keys(want).forEach(function(id){ ok = want[id].indexOf(norm($(id).value))>-1; mark($(id),ok); if(ok) pts+=0.5; });
+      var truth=[true,false,true,false], good=0;
+      $('e1checks').querySelectorAll('label').forEach(function(l,i){
+        var c = l.querySelector('input').checked===truth[i]; mark(l,c); if(c) good++;
+      });
+      pts += good/4*1.5;
+      return {pts:pts, msg:''};
+    },
+    2: function(){
+      var want='DECBA', pts=0;
+      for(var i=0;i<5;i++){ var el=$('e2_'+i); var ok = el.value.trim().toUpperCase()===want[i]; mark(el,ok); if(ok) pts+=0.4; }
+      return {pts:pts, msg:''};
+    },
+    3: function(){
+      var pts=0;
+      trace.forEach(function(row,i){ for(var j=0;j<3;j++){
+        var el=$('t'+i+j), v=norm(el.value).replace(/\s/g,''), ok = v===row[j+1]; mark(el,ok); if(ok) pts+=0.2; } });
+      var d = ($('e3out').value.match(/\d+/g)||[]).join(' ');
+      var ok2 = d==='2 3 1'; mark($('e3out'),ok2); if(ok2) pts+=1;
+      return {pts:pts, msg: ok2?'':'Rappel : l\'affichage donne les valeurs finales de a, b puis c.'};
+    },
+    4: function(){
+      var pts=0, ok;
+      ok = norm($('e4_1').value)==='lire'; mark($('e4_1'),ok); if(ok) pts+=0.5;
+      var arrow = norm($('e4_2').value).replace(/\s/g,'');
+      ok = ['←','<-','<--',':='].indexOf(arrow)>-1; mark($('e4_2'),ok); if(ok) pts+=0.5;
+      ok = norm($('e4_3').value)==='tva'; mark($('e4_3'),ok); if(ok) pts+=0.5;
+      ok = norm($('e4_4').value)==='ttc'; mark($('e4_4'),ok); if(ok) pts+=0.5;
+      var v = num($('e4test').value); ok = Math.abs(v-11925)<0.01; mark($('e4test'),ok); if(ok) pts+=1;
+      return {pts:pts, msg: ok?'':'Calcul : 10 000 × (1 + 0,1925).'};
+    },
+    5: function(){
+      var pts=0, ok;
+      ok = num($('e5a').value)===12; mark($('e5a'),ok); if(ok) pts+=1/3;
+      ok = num($('e5b').value)===12; mark($('e5b'),ok); if(ok) pts+=1/3;
+      ok = norm($('e5c').value)==='non'; mark($('e5c'),ok); if(ok) pts+=1/3;
+      var res = runSwap($('e5swap').value), msg='';
+      if(res.err){ mark($('e5swap'),false); msg = 'Instructions : '+res.err+'.'; }
+      else if(res.env.a===12 && res.env.b===7){ mark($('e5swap'),true); pts+=2; msg='Échange réussi : a = 12 et b = 7 à la fin.'; }
+      else { mark($('e5swap'),false); msg='Avec vos instructions, a = '+fmt(res.env.a)+' et b = '+fmt(res.env.b)+' à la fin. Il faut a = 12 et b = 7.'; }
+      return {pts:pts, msg:msg};
+    },
+    6: function(){
+      var pts=0, ok, msg=[];
+      var t1=norm($('e6_1').value);
+      var names=t1.split(/,|;| et |\//).map(function(s){return s.trim();}).filter(Boolean);
+      ok = names.length>=2 && /(reel|decimal|flottant|nombre)/.test(t1); mark($('e6_1'),ok); if(ok) pts+=0.5;
+      ok = /moy/.test(norm($('e6_2').value)); mark($('e6_2'),ok); if(ok) pts+=0.5;
+      var f=norm($('e6_3').value);
+      ok = /4/.test(f)&&/3/.test(f)&&/7/.test(f)&&/\//.test(f); mark($('e6_3'),ok); if(ok) pts+=0.5;
+      var n=norm($('e6_4').value), area=$('e6_4'), got4=0;
+      if(/variables?/.test(n) && /(reel|decimal|entier)/.test(n)) got4+=1; else msg.push('déclarez les variables avec leur type');
+      var nl=(n.match(/lire/g)||[]).length;
+      if(nl>=2 || /lire\s*\(\s*\w+\s*,\s*\w+/.test(n)) got4+=1; else msg.push('lisez les deux notes avec Lire');
+      var calc=n.split('\n').some(function(l){ return /(←|<-|:=)/.test(l) && /\//.test(l) && /\(/.test(l) && /4/.test(l) && /3/.test(l) && /7/.test(l); });
+      var calcNoPar=n.split('\n').some(function(l){ return /(←|<-|:=)/.test(l) && /\//.test(l) && /7/.test(l); });
+      if(calc) got4+=1; else msg.push(calcNoPar?'attention aux parenthèses dans le calcul de la moyenne':'écrivez le calcul de la moyenne avec une affectation');
+      if(/afficher/.test(n)) got4+=0.25; else msg.push('affichez le résultat avec Afficher');
+      pts+=got4; mark(area, got4>=3.25);
+      var v=num($('e6_5').value); ok=Math.abs(v-13.2857)<0.005; mark($('e6_5'),ok); if(ok) pts+=0.25;
+      return {pts:pts, msg: msg.length? 'Algorithme : '+msg.join(' ; ')+'.' : ''};
+    }
+  };
+
+  // mini-interpréteur pour l'échange de a et b
+  function runSwap(text){
+    var lines=String(text||'').split(/\n|;/).map(function(l){return l.trim();}).filter(Boolean);
+    if(!lines.length) return {err:'rien n\'est écrit'};
+    var env={a:7,b:12}, steps=0;
+    for(var i=0;i<lines.length;i++){
+      var l=norm(lines[i]);
+      if(/^(variables?|var|debut|fin|algorithme|constante)\b/.test(l)) continue;
+      var m=l.match(/^([a-z_][a-z_0-9]*)\s*(?:←|<-+|:=)\s*(.+)$/);
+      if(!m) return {err:'la ligne « '+lines[i]+' » n\'est pas une affectation reconnue (écrivez par ex. temp <- a)'};
+      if(!/^[a-z_0-9+\-*\s()]+$/.test(m[2])) return {err:'la ligne « '+lines[i]+' » n\'est pas reconnue'};
+      try{
+        var expr=m[2].replace(/[a-z_][a-z_0-9]*/g,function(id){
+          if(!(id in env)) throw new Error('la variable « '+id+' » n\'a pas encore de valeur à la ligne « '+lines[i]+' »');
+          return env[id];
+        });
+        var val=Function('"use strict";return ('+expr+')')();
+        if(typeof val!=='number'||!isFinite(val)) throw new Error('calcul impossible à la ligne « '+lines[i]+' »');
+        env[m[1]]=val; steps++;
+      }catch(e){ return {err:e.message}; }
+    }
+    if(!steps) return {err:'aucune affectation trouvée'};
+    return {env:env};
+  }
+
+  function run(k){
+    var r = checks[k]();
+    var p = r25(r.pts); got[k]=p;
+    var el=$('r'+k); el.textContent = fmt(p)+' / '+MAX[k];
+    el.className='res '+(p>=MAX[k]?'good':(p<=MAX[k]/2-0.01?'bad':'mid'));
+    $('m'+k).textContent = r.msg||'';
+    $('c'+k).hidden=false;
+    refresh();
+  }
+  function refresh(){
+    var keys=Object.keys(got), t=0; keys.forEach(function(k){ t+=got[k]; });
+    $('tot').textContent = fmt(Math.round(t*100)/100);
+    $('barfill').style.width = (t/20*100)+'%';
+    $('sub').textContent = keys.length ? (keys.length+' exercice'+(keys.length>1?'s':'')+' vérifié'+(keys.length>1?'s':'')+' sur 6') : 'Aucun exercice vérifié pour l\'instant';
+  }
+
+  document.querySelectorAll('[data-check]').forEach(function(b){
+    b.addEventListener('click', function(){ run(b.getAttribute('data-check')); });
+  });
+  $('all').addEventListener('click', function(){ for(var k=1;k<=6;k++) run(String(k)); });
+  $('reset').addEventListener('click', function(){
+    document.querySelectorAll('.ex input[type=text], .ex textarea').forEach(function(e){ e.value=''; });
+    document.querySelectorAll('.ex input[type=checkbox]').forEach(function(e){ e.checked=false; });
+    clearMarks(document);
+    for(var k=1;k<=6;k++){ $('r'+k).textContent=''; $('r'+k).className='res'; $('m'+k).textContent=''; $('c'+k).hidden=true; $('c'+k).open=false; }
+    got={}; refresh();
+  });
+})();
+</script>
+
+</body></html>
