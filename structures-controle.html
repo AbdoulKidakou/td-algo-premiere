@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TD Structures de contrôle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Concept : une feuille de TD en colonne unique, chaque exercice est un bloc à vérifier séparément, le score se cumule en haut. */
+:root{
+  --bg:#F3F6FA; --surface:#FFFFFF; --fg:#14202E; --muted:#51606F; --line:#CCD6E2;
+  --accent:#1F4E79; --accent-fg:#FFFFFF; --code-bg:#EAF1F8; --field:#F7FAFD;
+  --ok:#1E7B45; --ok-bg:#E3F4EA; --ko:#B3261E; --ko-bg:#FBE9E7; --focus:#0B63CE;
+  --f-display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F151C; --surface:#17202A; --fg:#E6ECF2; --muted:#9AAABA; --line:#2C3A49;
+    --accent:#7DB1E6; --accent-fg:#0B1722; --code-bg:#1C2937; --field:#101A24;
+    --ok:#6FD39A; --ok-bg:#15301F; --ko:#FF8A80; --ko-bg:#3A1A18; --focus:#8CC2FF; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F151C; --surface:#17202A; --fg:#E6ECF2; --muted:#9AAABA; --line:#2C3A49;
+  --accent:#7DB1E6; --accent-fg:#0B1722; --code-bg:#1C2937; --field:#101A24;
+  --ok:#6FD39A; --ok-bg:#15301F; --ko:#FF8A80; --ko-bg:#3A1A18; --focus:#8CC2FF; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17px;line-height:1.5;
+  padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:760px;margin-inline:auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;flex-direction:column;gap:6px}
+.school{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-size:clamp(26px,6vw,38px);line-height:1.1;margin:0;color:var(--accent);text-wrap:balance}
+.meta{color:var(--muted);font-size:15px}
+.meta b{color:var(--fg)}
+.who{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:6px}
+.who label{font-weight:600}
+.who input{flex:1 1 220px;min-width:0}
+input[type=text],textarea{font:inherit;font-family:var(--f-mono);font-size:16px;color:var(--fg);background:var(--field);
+  border:1.5px solid var(--line);border-radius:6px;padding:6px 9px;width:100%;min-width:0}
+textarea{resize:vertical;line-height:1.45;min-height:130px}
+input[type=text]:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,a:focus-visible,input[type=checkbox]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.score{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;justify-content:space-between}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.score .big{font-family:var(--f-display);font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+.score .big small{font-size:16px;color:var(--muted);font-weight:600}
+.score .sub{color:var(--muted);font-size:14px}
+.bar{flex:1 1 100%;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .3s}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+.how{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.how h2{font-family:var(--f-display);font-size:18px;margin:0 0 8px}
+pre.code{font-family:var(--f-mono);font-size:14.5px;line-height:1.5;background:var(--code-bg);border:1px solid var(--line);
+  border-radius:6px;padding:10px 12px;margin:8px 0;overflow-x:auto;white-space:pre}
+.how p{margin:8px 0 0}
+.ex{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ex>.hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;background:var(--accent);color:var(--accent-fg);padding:9px 16px}
+.ex>.hd h2{font-family:var(--f-display);font-size:18px;margin:0}
+.ex>.hd .pts{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.ex .bd{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.ex p{margin:0}
+.q{font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.row .f{display:flex;align-items:center;gap:6px;flex:1 1 130px;min-width:0}
+.row .f span{font-weight:600;font-family:var(--f-mono)}
+.checks{display:flex;flex-direction:column;gap:6px}
+.checks label{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px;border:1.5px solid transparent;cursor:pointer}
+.checks input{width:20px;height:20px;margin-top:3px;flex:none;accent-color:var(--accent)}
+.order{display:flex;gap:8px;flex-wrap:wrap}
+.order .f{flex:0 0 52px;display:flex;flex-direction:column;gap:3px;align-items:center;font-size:13px;color:var(--muted)}
+.order input{text-align:center;padding-inline:4px;text-transform:uppercase}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:420px}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:left}
+th{background:var(--code-bg)}
+td code{font-family:var(--f-mono);font-size:14.5px}
+td input{text-align:center}
+.ok{border-color:var(--ok)!important;background:var(--ok-bg)!important}
+.ko{border-color:var(--ko)!important;background:var(--ko-bg)!important}
+.actions{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+button{font:inherit;font-weight:600;border-radius:8px;padding:8px 16px;cursor:pointer;border:1.5px solid var(--accent)}
+.btn-main{background:var(--accent);color:var(--accent-fg)}
+.btn-alt{background:transparent;color:var(--accent)}
+.res{font-weight:700;font-variant-numeric:tabular-nums}
+.res.good{color:var(--ok)}.res.bad{color:var(--ko)}.res.mid{color:var(--fg)}
+.msg{color:var(--muted);font-size:15px}
+details.corr{border:1px dashed var(--ok);border-radius:8px;background:var(--ok-bg);padding:8px 12px}
+details.corr summary{cursor:pointer;font-weight:700;color:var(--ok)}
+details.corr .in{padding-top:8px;display:flex;flex-direction:column;gap:6px;color:var(--fg)}
+details.corr pre.code{margin:2px 0}
+.hint{font-size:14px;color:var(--muted)}
+.final{display:flex;flex-wrap:wrap;gap:10px}
+.refs{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.refs h2{font-family:var(--f-display);font-size:20px;margin:0 0 10px}
+.refs ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
+.refs li b{display:block}
+.refs a{color:var(--accent);word-break:break-all;font-size:14.5px}
+footer{color:var(--muted);font-size:14px;text-align:center}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+<style>
+.rap{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:10px 0}
+.rap pre.code{margin:0;font-size:13.5px}
+.lab{font-size:12px;letter-spacing:.06em;font-weight:700;color:var(--accent);margin-bottom:3px}
+.tw table{min-width:0}
+.tw th,.tw td{padding:4px}
+.tw td input{padding-inline:2px;text-align:center;min-width:0}
+.tw th:first-child,.tw td:first-child{white-space:nowrap;width:1%}
+.row .f.lbl{flex-direction:column;align-items:stretch;gap:3px;flex:1 1 150px}
+.row .f.lbl span{font-family:var(--f-body);font-weight:600}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="school">Lycée Classique et Moderne de Ngaoundéré · Département d'informatique</div>
+    <h1>TD : les structures de contrôle</h1>
+    <div class="meta">Classe de Première · Algorithmique · Enseignant : <b>Abdoul Wahabou K.</b></div>
+    <div class="who">
+      <label for="nom">Nom et prénom</label>
+      <input type="text" id="nom" autocomplete="name" style="font-family:var(--f-body)">
+    </div>
+  </header>
+
+  <div class="score" role="status" aria-live="polite">
+    <div class="big"><span id="tot">0</span> <small>/ 20</small></div>
+    <div class="sub" id="sub">Aucun exercice vérifié pour l'instant</div>
+    <div class="bar" aria-hidden="true"><i id="barfill"></i></div>
+  </div>
+
+  <section class="how">
+    <h2>Rappel : les structures de contrôle</h2>
+    <div class="rap">
+      <div><div class="lab">ALTERNATIVE SIMPLE</div><pre class="code">Si condition Alors
+    instructions
+FinSi</pre></div>
+      <div><div class="lab">ALTERNATIVE COMPLÈTE</div><pre class="code">Si condition Alors
+    instructions 1
+Sinon
+    instructions 2
+FinSi</pre></div>
+      <div><div class="lab">ALTERNATIVE IMBRIQUÉE</div><pre class="code">Si condition 1 Alors
+    instructions 1
+Sinon Si condition 2 Alors
+    instructions 2
+Sinon
+    instructions 3
+FinSi</pre></div>
+      <div><div class="lab">BOUCLE POUR</div><pre class="code">Pour i de a à b faire
+    instructions
+FinPour</pre></div>
+      <div><div class="lab">BOUCLE TANT QUE</div><pre class="code">Tant que condition faire
+    instructions
+FinTantQue</pre></div>
+      <div><div class="lab">BOUCLE RÉPÉTER</div><pre class="code">Répéter
+    instructions
+Jusqu'à condition</pre></div>
+    </div>
+    <p>Une <b>condition</b> vaut Vrai ou Faux. Comparaisons : = ≠ &lt; &gt; ≤ ≥. Opérateurs logiques : ET, OU, NON. <code>a mod b</code> donne le reste de la division entière, <code>a div b</code> le quotient entier.</p>
+    <p><b>Pour</b> : nombre de répétitions connu. <b>Tant que</b> : teste avant chaque tour, le corps peut ne jamais s'exécuter. <b>Répéter</b> : teste après chaque tour, le corps s'exécute au moins une fois.</p>
+    <p class="hint">Au clavier, tapez <b>&gt;=</b> et <b>&lt;=</b> pour ≥ et ≤, <b>&lt;-</b> pour ←. Les majuscules et les accents ne comptent pas.</p>
+  </section>
+
+  <!-- EXERCICE 1 -->
+  <section class="ex" id="ex1">
+    <div class="hd"><h2>Exercice 1 · Vocabulaire</h2><span class="pts">3 points</span></div>
+    <div class="bd">
+      <p><span class="q">a)</span> Complétez : « Une structure <b>(1)</b> exécute des instructions seulement si une condition est vraie. Une structure <b>(2)</b> répète des instructions. Une <b>(3)</b> est une expression qui vaut Vrai ou Faux. »</p>
+      <div class="row">
+        <div class="f"><span>(1)</span><input type="text" id="e1a" aria-label="mot 1" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>(2)</span><input type="text" id="e1b" aria-label="mot 2" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>(3)</span><input type="text" id="e1c" aria-label="mot 3" autocomplete="off" autocapitalize="none"></div>
+      </div>
+      <p><span class="q">b)</span> Cochez les affirmations <b>vraies</b> :</p>
+      <div class="checks" id="e1checks">
+        <label><input type="checkbox"> « Tant que » teste sa condition avant chaque tour de boucle.</label>
+        <label><input type="checkbox"> « Répéter … Jusqu'à » exécute son corps au moins une fois.</label>
+        <label><input type="checkbox"> Dans « Si … Alors … Sinon », les deux blocs s'exécutent l'un après l'autre.</label>
+        <label><input type="checkbox"> La boucle « Pour » s'utilise quand le nombre de répétitions est inconnu.</label>
+      </div>
+      <div class="actions"><button class="btn-main" data-check="1">Vérifier</button><span class="res" id="r1"></span></div>
+      <p class="msg" id="m1"></p>
+      <details class="corr" id="c1" hidden><summary>Voir la correction</summary><div class="in">
+        <p>a) alternative (ou conditionnelle) · itérative (ou répétitive) · condition.</p>
+        <p>b) Vraies : 1 et 2. Dans Si…Sinon, un seul des deux blocs s'exécute. Pour convient quand le nombre de tours est connu.</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 2 -->
+  <section class="ex" id="ex2">
+    <div class="hd"><h2>Exercice 2 · Lire une alternative</h2><span class="pts">3 points</span></div>
+    <div class="bd">
+<pre class="code">Algorithme Parite
+Variables n : Entier
+Début
+    Lire(n)
+    Si n mod 2 = 0 Alors
+        Afficher("pair")
+    Sinon
+        Afficher("impair")
+    FinSi
+Fin</pre>
+      <p>Qu'affiche l'algorithme lorsque l'utilisateur saisit :</p>
+      <div class="row">
+        <div class="f"><span>n = 14</span><input type="text" id="e2a" aria-label="affichage pour 14" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>n = 7</span><input type="text" id="e2b" aria-label="affichage pour 7" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>n = 0</span><input type="text" id="e2c" aria-label="affichage pour 0" autocomplete="off" autocapitalize="none"></div>
+      </div>
+      <div class="actions"><button class="btn-main" data-check="2">Vérifier</button><span class="res" id="r2"></span></div>
+      <p class="msg" id="m2"></p>
+      <details class="corr" id="c2" hidden><summary>Voir la correction</summary><div class="in">
+        <p>14 → <b>pair</b> · 7 → <b>impair</b> · 0 → <b>pair</b>.</p>
+        <p>14 mod 2 = 0 et 0 mod 2 = 0 : la condition est vraie. 7 mod 2 = 1 : la condition est fausse, le bloc Sinon s'exécute.</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 3 -->
+  <section class="ex" id="ex3">
+    <div class="hd"><h2>Exercice 3 · Alternative imbriquée</h2><span class="pts">3 points</span></div>
+    <div class="bd">
+      <p>L'algorithme affiche la mention d'une moyenne : « Bien » à partir de 14, « Passable » de 10 à moins de 14, « Insuffisant » en dessous de 10. Complétez les 3 trous :</p>
+<pre class="code">Algorithme Mention
+Variables moy : Réel
+Début
+    Lire(moy)
+    Si moy >= 14 Alors
+        Afficher("Bien")
+    ......(1)...... moy >= 10 Alors
+        Afficher("Passable")
+    ......(2)......
+        Afficher("Insuffisant")
+    ......(3)......
+Fin</pre>
+      <div class="row">
+        <div class="f"><span>(1)</span><input type="text" id="e3_1" aria-label="trou 1" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>(2)</span><input type="text" id="e3_2" aria-label="trou 2" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>(3)</span><input type="text" id="e3_3" aria-label="trou 3" autocomplete="off" autocapitalize="none"></div>
+      </div>
+      <p><b>Tests :</b> que s'affiche-t-il pour chaque moyenne saisie ?</p>
+      <div class="row">
+        <div class="f"><span>14</span><input type="text" id="e3t1" aria-label="affichage pour 14" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>11,5</span><input type="text" id="e3t2" aria-label="affichage pour 11,5" autocomplete="off" autocapitalize="none"></div>
+        <div class="f"><span>9</span><input type="text" id="e3t3" aria-label="affichage pour 9" autocomplete="off" autocapitalize="none"></div>
+      </div>
+      <div class="actions"><button class="btn-main" data-check="3">Vérifier</button><span class="res" id="r3"></span></div>
+      <p class="msg" id="m3"></p>
+      <details class="corr" id="c3" hidden><summary>Voir la correction</summary><div class="in">
+        <p>(1) Sinon Si · (2) Sinon · (3) FinSi. Tests : 14 → <b>Bien</b> · 11,5 → <b>Passable</b> · 9 → <b>Insuffisant</b>.</p>
+        <p>Les conditions sont testées dans l'ordre : 11,5 échoue à la première puis vérifie la deuxième ; 9 échoue aux deux et tombe dans Sinon.</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 4 -->
+  <section class="ex" id="ex4">
+    <div class="hd"><h2>Exercice 4 · Boucle Pour</h2><span class="pts">3 points</span></div>
+    <div class="bd">
+<pre class="code">Algorithme SommePour
+Variables i, s : Entier
+Début
+    s ← 0
+    Pour i de 1 à 5 faire
+        s ← s + i
+    FinPour
+    Afficher(s)
+Fin</pre>
+      <p><span class="q">a)</span> Valeur de s <b>à la fin de chaque tour</b> (s vaut 0 avant le premier tour).</p>
+      <div class="tw"><table>
+        <thead><tr><th>Tour</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+        <tbody>
+          <tr><td>i</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+          <tr><td>s</td>
+            <td><input type="text" id="s4_1" aria-label="s au tour 1" autocomplete="off" inputmode="numeric"></td>
+            <td><input type="text" id="s4_2" aria-label="s au tour 2" autocomplete="off" inputmode="numeric"></td>
+            <td><input type="text" id="s4_3" aria-label="s au tour 3" autocomplete="off" inputmode="numeric"></td>
+            <td><input type="text" id="s4_4" aria-label="s au tour 4" autocomplete="off" inputmode="numeric"></td>
+            <td><input type="text" id="s4_5" aria-label="s au tour 5" autocomplete="off" inputmode="numeric"></td></tr>
+        </tbody>
+      </table></div>
+      <p><span class="q">b)</span> Que s'affiche-t-il à l'écran ?</p>
+      <div class="row"><div class="f" style="max-width:220px"><input type="text" id="e4out" aria-label="affichage final" autocomplete="off" inputmode="numeric"></div></div>
+      <div class="actions"><button class="btn-main" data-check="4">Vérifier</button><span class="res" id="r4"></span></div>
+      <p class="msg" id="m4"></p>
+      <details class="corr" id="c4" hidden><summary>Voir la correction</summary><div class="in">
+        <p>s : 1, 3, 6, 10, 15. Affichage : <b>15</b>.</p>
+        <p>L'algorithme calcule 1 + 2 + 3 + 4 + 5.</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 5 -->
+  <section class="ex" id="ex5">
+    <div class="hd"><h2>Exercice 5 · Boucle Tant que</h2><span class="pts">4 points</span></div>
+    <div class="bd">
+<pre class="code">Algorithme Moitie
+Variables n, c : Entier
+Début
+    n ← 100
+    c ← 0
+    Tant que n > 10 faire
+        n ← n div 2
+        c ← c + 1
+    FinTantQue
+    Afficher(c, n)
+Fin</pre>
+      <p><span class="q">a)</span> Valeurs de n et c <b>à la fin de chaque tour</b>. Laissez vides les colonnes inutiles (avant le premier tour : n = 100 et c = 0).</p>
+      <div class="tw"><table>
+        <thead><tr><th>Tour</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+        <tbody>
+          <tr><td>n</td>
+            <td><input type="text" id="n5_1" aria-label="n au tour 1" autocomplete="off"></td>
+            <td><input type="text" id="n5_2" aria-label="n au tour 2" autocomplete="off"></td>
+            <td><input type="text" id="n5_3" aria-label="n au tour 3" autocomplete="off"></td>
+            <td><input type="text" id="n5_4" aria-label="n au tour 4" autocomplete="off"></td>
+            <td><input type="text" id="n5_5" aria-label="n au tour 5" autocomplete="off"></td></tr>
+          <tr><td>c</td>
+            <td><input type="text" id="c5_1" aria-label="c au tour 1" autocomplete="off"></td>
+            <td><input type="text" id="c5_2" aria-label="c au tour 2" autocomplete="off"></td>
+            <td><input type="text" id="c5_3" aria-label="c au tour 3" autocomplete="off"></td>
+            <td><input type="text" id="c5_4" aria-label="c au tour 4" autocomplete="off"></td>
+            <td><input type="text" id="c5_5" aria-label="c au tour 5" autocomplete="off"></td></tr>
+        </tbody>
+      </table></div>
+      <div class="row">
+        <div class="f lbl"><span>b) Nombre de tours</span><input type="text" id="e5tours" aria-label="nombre de tours" autocomplete="off" inputmode="numeric"></div>
+        <div class="f lbl"><span>c) Affichage</span><input type="text" id="e5out" aria-label="affichage final" autocomplete="off"></div>
+      </div>
+      <div class="checks"><label id="e5infl"><input type="checkbox" id="e5inf"> <span><b>d)</b> Cochez si c'est vrai : en supprimant l'instruction <code>n ← n div 2</code>, la boucle ne s'arrêterait jamais.</span></label></div>
+      <div class="actions"><button class="btn-main" data-check="5">Vérifier</button><span class="res" id="r5"></span></div>
+      <p class="msg" id="m5"></p>
+      <details class="corr" id="c5" hidden><summary>Voir la correction</summary><div class="in">
+        <div class="tw"><table>
+          <thead><tr><th>Tour</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
+          <tbody>
+            <tr><td>n</td><td>50</td><td>25</td><td>12</td><td>6</td><td>—</td></tr>
+            <tr><td>c</td><td>1</td><td>2</td><td>3</td><td>4</td><td>—</td></tr>
+          </tbody></table></div>
+        <p>b) 4 tours · c) <b>4 6</b> · d) vrai : sans modification de n, la condition n > 10 resterait vraie, c'est une boucle infinie.</p>
+        <p>Le 5e tour n'a pas lieu car 6 > 10 est faux.</p>
+      </div></details>
+    </div>
+  </section>
+
+  <!-- EXERCICE 6 -->
+  <section class="ex" id="ex6">
+    <div class="hd"><h2>Exercice 6 · Saisie contrôlée</h2><span class="pts">4 points</span></div>
+    <div class="bd">
+      <p><b>Énoncé :</b> écrire un algorithme qui demande une note sur 20 et la <b>redemande tant qu'elle n'est pas valide</b> (une note valide est comprise entre 0 et 20 inclus). Quand la note est valide, il affiche « Note enregistrée : » suivi de la note.</p>
+      <p class="q">① Condition qui indique qu'une note est valide</p>
+      <input type="text" id="e6cond" aria-label="condition de validité" autocomplete="off" autocapitalize="none" placeholder="ex. : note > 5">
+      <p class="q">② Algorithme complet (déclaration, boucle, affichage)</p>
+      <textarea id="e6algo" rows="9" spellcheck="false" aria-label="algorithme complet" placeholder="Algorithme ...&#10;Variables ...&#10;Début&#10;   ...&#10;Fin"></textarea>
+      <p class="q">③ L'utilisateur saisit successivement 25, −3 puis 14</p>
+      <div class="row">
+        <div class="f lbl"><span>Exécutions de Lire</span><input type="text" id="e6lire" aria-label="nombre d'exécutions de Lire" autocomplete="off" inputmode="numeric"></div>
+        <div class="f lbl"><span>Note enregistrée</span><input type="text" id="e6note" aria-label="note enregistrée" autocomplete="off" inputmode="decimal"></div>
+      </div>
+      <div class="actions"><button class="btn-main" data-check="6">Vérifier</button><span class="res" id="r6"></span></div>
+      <p class="msg" id="m6"></p>
+      <p class="hint">La vérification de l'algorithme repère les éléments attendus (déclaration, boucle, Lire, condition correcte, Afficher). Elle ne remplace pas la relecture du professeur.</p>
+      <details class="corr" id="c6" hidden><summary>Voir la correction</summary><div class="in">
+        <p>① note >= 0 ET note <= 20</p>
+<pre class="code">Algorithme SaisieControlee
+Variables note : Réel
+Début
+    Répéter
+        Afficher("Entrez une note sur 20 :")
+        Lire(note)
+    Jusqu'à note >= 0 ET note <= 20
+    Afficher("Note enregistrée : ", note)
+Fin</pre>
+        <p>Autre solution avec Tant que (condition inversée : la note est invalide) :</p>
+<pre class="code">Lire(note)
+Tant que note < 0 OU note > 20 faire
+    Afficher("Note invalide")
+    Lire(note)
+FinTantQue
+Afficher("Note enregistrée : ", note)</pre>
+        <p>③ 25 et −3 sont refusées, 14 est acceptée : <b>3</b> lectures, note enregistrée <b>14</b>. Erreur fréquente : écrire OU au lieu de ET dans la condition de validité.</p>
+      </div></details>
+    </div>
+  </section>
+
+  <div class="final">
+    <button class="btn-main" id="all">Tout vérifier</button>
+    <button class="btn-alt" id="reset">Recommencer</button>
+  </div>
+
+  <section class="refs">
+    <h2>Pour aller plus loin</h2>
+    <ul>
+      <li><b>Cours gratuit : OpenClassrooms, « Découvrez le fonctionnement des algorithmes »</b>Niveau facile, environ 6 h : variables, fonctions, boucles et structures conditionnelles.<br><a href="https://openclassrooms.com/fr/courses/7527306-decouvrez-le-fonctionnement-des-algorithmes" target="_blank" rel="noopener">openclassrooms.com/fr/courses/7527306-decouvrez-le-fonctionnement-des-algorithmes</a></li>
+      <li><b>Entraînement en ligne : France-IOI</b>Exercices d'algorithmique corrigés automatiquement, à son rythme, en Python ou en C.<br><a href="https://www.france-ioi.org/algo/chapters.php" target="_blank" rel="noopener">france-ioi.org/algo/chapters.php</a></li>
+      <li><b>Cours pour non-matheux : Christophe Darmangeat</b>« Algorithmique et programmation pour non-matheux », cours en français courant avec exercices et corrigés, recommandé par l'APMEP. Recherchez ce titre sur Internet.</li>
+    </ul>
+  </section>
+
+  <footer>TD d'algorithmique · Structures de contrôle · Première · Abdoul Wahabou K. · Lycée Classique et Moderne de Ngaoundéré</footer>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var norm = function(s){ return String(s||'').toLowerCase().replace(/[’‘`´]/g,"'").normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); };
+  var letters = function(s){ return norm(s).replace(/[^a-z]/g,''); };
+  var compact = function(s){ return norm(s).replace(/\s/g,''); };
+  var digits = function(s){ return (String(s||'').match(/\d+/g)||[]).join(' '); };
+  var r25 = function(v){ return Math.round(v*4)/4; };
+  var fmt = function(v){ return String(v).replace('.',','); };
+  function mark(el, ok){ el.classList.remove('ok','ko'); el.classList.add(ok?'ok':'ko'); }
+  function clearMarks(root){ root.querySelectorAll('.ok,.ko').forEach(function(e){ e.classList.remove('ok','ko'); }); }
+  function num(s){ var t=String(s||'').replace(/[^\d,.\-−]/g,'').replace('−','-').replace(',','.'); return t===''?NaN:parseFloat(t); }
+  var isBlank = function(s){ return /^[\s\-–—\/.]*$/.test(String(s||'')); };
+
+  function validCond(c){
+    var chained = /\b0\s*(<=|≤)\s*[a-z_]+\s*(<=|≤)\s*20\b/.test(c);
+    var two = /(>=|≥)/.test(c) && /(<=|≤)/.test(c) && /\b0\b/.test(c) && /\b20\b/.test(c) && /(\bet\b|\band\b|&&)/.test(c);
+    return chained || two;
+  }
+  function invalidCond(c){
+    return /<\s*0/.test(c) && />\s*20/.test(c) && /(\bou\b|\bor\b|\|\|)/.test(c);
+  }
+
+  var MAX = {1:3,2:3,3:3,4:3,5:4,6:4};
+  var got = {};
+
+  var checks = {
+    1: function(){
+      var pts=0, ok;
+      var want = {e1a:['alternative','alternatives','conditionnelle','conditionnel'],
+                  e1b:['iterative','iteratives','repetitive','repetitives','iteratif','repetitif','boucle'],
+                  e1c:['condition','conditions']};
+      Object.keys(want).forEach(function(id){ ok = want[id].indexOf(letters($(id).value))>-1; mark($(id),ok); if(ok) pts+=0.5; });
+      var truth=[true,true,false,false], good=0;
+      var boxes = $('e1checks').querySelectorAll('label');
+      var any = Array.prototype.some.call(boxes, function(l){ return l.querySelector('input').checked; });
+      boxes.forEach(function(l,i){
+        if(!any) return;
+        var c = l.querySelector('input').checked===truth[i]; mark(l,c); if(c) good++;
+      });
+      pts += good/4*1.5;
+      return {pts:pts, msg:''};
+    },
+    2: function(){
+      var want={e2a:'pair',e2b:'impair',e2c:'pair'}, pts=0, hint=false;
+      Object.keys(want).forEach(function(id){ var ok=letters($(id).value)===want[id]; mark($(id),ok); if(ok) pts+=1; else hint=true; });
+      return {pts:pts, msg: hint?'Calculez n mod 2 : si le reste vaut 0, la condition est vraie.':''};
+    },
+    3: function(){
+      var pts=0, ok;
+      ok = compact($('e3_1').value)==='sinonsi'; mark($('e3_1'),ok); if(ok) pts+=0.5;
+      ok = compact($('e3_2').value)==='sinon'; mark($('e3_2'),ok); if(ok) pts+=0.5;
+      ok = compact($('e3_3').value)==='finsi'; mark($('e3_3'),ok); if(ok) pts+=0.5;
+      var t={e3t1:'bien',e3t2:'passable',e3t3:'insuffisant'}, hint=false;
+      Object.keys(t).forEach(function(id){ var k=letters($(id).value)===t[id]; mark($(id),k); if(k) pts+=0.5; else hint=true; });
+      return {pts:pts, msg: hint?'Rappel : les conditions sont testées dans l\'ordre, la première vraie est la seule exécutée.':''};
+    },
+    4: function(){
+      var want=['1','3','6','10','15'], pts=0;
+      want.forEach(function(w,i){ var el=$('s4_'+(i+1)), ok=compact(el.value)===w; mark(el,ok); if(ok) pts+=0.4; });
+      var ok2 = digits($('e4out').value)==='15'; mark($('e4out'),ok2); if(ok2) pts+=1;
+      return {pts:pts, msg: ok2?'':'Rappel : Afficher(s) est après la boucle, on affiche la valeur finale de s.'};
+    },
+    5: function(){
+      var N=['50','25','12','6'], C=['1','2','3','4'], pts=0, i;
+      for(i=0;i<4;i++){
+        var en=$('n5_'+(i+1)), ec=$('c5_'+(i+1));
+        var a=compact(en.value)===N[i], b=compact(ec.value)===C[i];
+        mark(en,a); mark(ec,b); if(a) pts+=0.25; if(b) pts+=0.25;
+      }
+      var e5n=$('n5_5'), e5c=$('c5_5');
+      mark(e5n,isBlank(e5n.value)); mark(e5c,isBlank(e5c.value));
+      var ok = digits($('e5tours').value)==='4'; mark($('e5tours'),ok); if(ok) pts+=0.5;
+      ok = digits($('e5out').value)==='4 6'; mark($('e5out'),ok); if(ok) pts+=1;
+      ok = $('e5inf').checked; mark($('e5infl'),ok); if(ok) pts+=0.5;
+      return {pts:pts, msg:'Le 5e tour n\'a pas lieu quand la condition n > 10 est fausse.'};
+    },
+    6: function(){
+      var pts=0, ok, msg=[];
+      var c1=norm($('e6cond').value);
+      ok = validCond(c1); mark($('e6cond'),ok); if(ok) pts+=1;
+      if(!ok && invalidCond(c1)) msg.push('① cette condition décrit une note invalide ; on demande la condition de validité');
+      else if(!ok) msg.push('① une note est valide si elle est supérieure ou égale à 0 ET inférieure ou égale à 20');
+      var n=norm($('e6algo').value), area=$('e6algo'), g=0;
+      if(/variables?/.test(n) && /(reel|decimal|entier|nombre)/.test(n)) g+=0.5; else msg.push('déclarez la variable note avec son type');
+      var rep = /repeter/.test(n) && /jusqu/.test(n);
+      var tq = /tant\s*que/.test(n) && /(fin\s*tant\s*que|fintantque|ftq|fintq)/.test(n);
+      if(rep||tq) g+=0.5; else msg.push('utilisez Répéter … Jusqu\'à ou Tant que … FinTantQue');
+      var nlire=(n.match(/lire\s*\(/g)||[]).length;
+      if(rep ? nlire>=1 : nlire>=2) g+=0.25; else msg.push(tq?'avec Tant que, lisez la note avant la boucle et dans la boucle':'lisez la note avec Lire');
+      var condOk=false;
+      if(rep){ var m=n.match(/jusqu'?a\s+(.+)/); condOk = !!m && validCond(m[1]); }
+      else if(tq){ var m2=n.match(/tant\s*que\s+(.+?)(?:\s+faire)?\s*$/m); condOk = !!m2 && invalidCond(m2[1]); }
+      if(condOk) g+=0.5; else if(rep||tq) msg.push(rep?'la condition après Jusqu\'à doit exprimer que la note est valide':'après Tant que, la condition doit exprimer que la note est invalide');
+      if(/afficher/.test(n)) g+=0.25; else msg.push('affichez le résultat avec Afficher');
+      pts+=g; mark(area, g>=2);
+      ok = digits($('e6lire').value)==='3'; mark($('e6lire'),ok); if(ok) pts+=0.5;
+      var v=num($('e6note').value); ok = v===14; mark($('e6note'),ok); if(ok) pts+=0.5;
+      return {pts:pts, msg: msg.length? 'À revoir : '+msg.join(' ; ')+'.' : ''};
+    }
+  };
+
+  function run(k){
+    var r = checks[k]();
+    var p = r25(r.pts); got[k]=p;
+    var el=$('r'+k); el.textContent = fmt(p)+' / '+MAX[k];
+    el.className='res '+(p>=MAX[k]?'good':(p<=MAX[k]/2-0.01?'bad':'mid'));
+    $('m'+k).textContent = r.msg||'';
+    $('c'+k).hidden=false;
+    refresh();
+  }
+  function refresh(){
+    var keys=Object.keys(got), t=0; keys.forEach(function(k){ t+=got[k]; });
+    $('tot').textContent = fmt(Math.round(t*100)/100);
+    $('barfill').style.width = (t/20*100)+'%';
+    $('sub').textContent = keys.length ? (keys.length+' exercice'+(keys.length>1?'s':'')+' vérifié'+(keys.length>1?'s':'')+' sur 6') : 'Aucun exercice vérifié pour l\'instant';
+  }
+
+  document.querySelectorAll('[data-check]').forEach(function(b){
+    b.addEventListener('click', function(){ run(b.getAttribute('data-check')); });
+  });
+  $('all').addEventListener('click', function(){ for(var k=1;k<=6;k++) run(String(k)); });
+  $('reset').addEventListener('click', function(){
+    document.querySelectorAll('.ex input[type=text], .ex textarea').forEach(function(e){ e.value=''; });
+    document.querySelectorAll('.ex input[type=checkbox]').forEach(function(e){ e.checked=false; });
+    clearMarks(document);
+    for(var k=1;k<=6;k++){ $('r'+k).textContent=''; $('r'+k).className='res'; $('m'+k).textContent=''; $('c'+k).hidden=true; $('c'+k).open=false; }
+    got={}; refresh();
+  });
+})();
+</script>
+
+</body>
+</html>
