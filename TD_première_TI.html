@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TD interactif – Première TI – Système d'information</title>
+<style>
+  :root{--bg:#f5f7fb;--card:#fff;--ink:#1c2430;--mute:#5b6676;--line:#d9e0ec;--brand:#1f4e9c;--ok:#1a7f3c;--okbg:#e6f6ea;--ko:#b3261e;--kobg:#fdecea}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  header{background:var(--brand);color:#fff;padding:14px 16px;text-align:center}
+  header h1{margin:0;font-size:1.15rem}
+  header p{margin:2px 0 0;font-size:.85rem;opacity:.9}
+  main{max-width:860px;margin:0 auto;padding:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+  .id{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .id label{font-size:.85rem;color:var(--mute);display:block}
+  .id input{width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font-size:1rem}
+  nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  nav button{flex:1 1 auto;min-width:46px;padding:8px 6px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:.9rem;cursor:pointer}
+  nav button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  nav button.done::after{content:" ✓";color:var(--ok)}
+  nav button.on.done::after{color:#fff}
+  h2{font-size:1.1rem;margin:0 0 4px;color:var(--brand)}
+  .sub{color:var(--mute);font-size:.88rem;margin-bottom:10px}
+  .q{border-top:1px solid var(--line);padding:12px 0}
+  .q:first-of-type{border-top:0}
+  .qt{font-weight:600;margin-bottom:6px}
+  .opt{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:pointer}
+  .opt:hover{background:#f0f4fb}
+  .opt input{margin-top:5px}
+  .bank{font-size:.85rem;color:var(--mute);background:#f0f4fb;border-radius:8px;padding:6px 10px;margin:6px 0}
+  .blank{width:9.5em;padding:4px 6px;border:1px solid var(--line);border-bottom:2px solid var(--brand);border-radius:6px;font-size:1rem;margin:0 2px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;padding:4px 0}
+  select{width:100%;padding:7px;border:1px solid var(--line);border-radius:8px;font-size:.95rem;background:#fff}
+  .good{background:var(--okbg)!important;border-color:var(--ok)!important}
+  .bad{background:var(--kobg)!important;border-color:var(--ko)!important}
+  .fb{font-size:.88rem;margin-top:6px;color:var(--ko)}
+  .fb.okk{color:var(--ok)}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .btn{padding:10px 16px;border:0;border-radius:8px;background:var(--brand);color:#fff;font-size:1rem;cursor:pointer}
+  .btn.sec{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+  .score{font-size:1.1rem;font-weight:700;margin-top:10px}
+  table{border-collapse:collapse;width:100%;font-size:.9rem}
+  td,th{border:1px solid var(--line);padding:6px 8px;text-align:left}
+  footer{text-align:center;color:var(--mute);font-size:.85rem;padding:14px 10px 24px}
+  @media(max-width:560px){.id{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>TD interactif – Première TI – Système d'information</h1>
+  <p>Lycée Classique et Moderne de Ngaoundéré – Département d'informatique – Enseignant : Abdoul Wahabou K.</p>
+</header>
+<main>
+  <div class="card">
+    <div class="id">
+      <div><label for="nom">Nom et prénom</label><input id="nom" autocomplete="name"></div>
+      <div><label for="classe">Classe</label><input id="classe" value="Première TI"></div>
+    </div>
+    <p class="sub" style="margin:10px 0 0">Choisis une leçon, réponds aux questions puis clique sur « Valider ». Tu peux recommencer autant de fois que tu veux. Les accents et les majuscules ne comptent pas dans les phrases à trous.</p>
+  </div>
+  <nav id="nav"></nav>
+  <div id="lesson"></div>
+  <div class="card" id="bilan"></div>
+</main>
+<footer>Abdoul Wahabou K. – Lycée Classique et Moderne de Ngaoundéré – Département d'informatique</footer>
+
+<script>
+/* ===================== DONNÉES ===================== */
+// types : qcm, multi, vf, trous, assoc
+const L = [
+{t:"Description des systèmes d'organisation", q:[
+ {k:"qcm", q:"Un lycée est :", o:["une organisation","un logiciel","un projet"], a:0},
+ {k:"trous", q:"Le système de {1} prend les décisions, le système {2} transforme les ressources et le système d'{3} relie les deux.", bank:["pilotage","opérant","information"], a:[["pilotage","decision"],["operant"],["information"]]},
+ {k:"vf", q:"Une organisation échange des flux avec son environnement (clients, fournisseurs, banque…).", a:true},
+ {k:"vf", q:"Le système de pilotage ne prend aucune décision.", a:false, e:"Il fixe les objectifs, décide et contrôle."},
+ {k:"assoc", q:"Associe chaque activité d'une pharmacie à son sous-système :", p:[["Fixer les prix de vente","Pilotage"],["Remettre les médicaments au client","Opérant"],["Enregistrer les ventes dans le registre","Information"]]},
+ {k:"multi", q:"Quels sont les flux d'une organisation ?", o:["Flux physiques","Flux d'informations","Flux financiers","Flux de lumière"], a:[0,1,2]}
+]},
+{t:"Introduction au système d'information", q:[
+ {k:"qcm", q:"Une information est :", o:["une donnée interprétée qui a un sens","une donnée brute sans contexte","un ordinateur"], a:0},
+ {k:"multi", q:"Quelles sont les fonctions d'un système d'information ?", o:["Collecter","Mémoriser","Traiter","Diffuser","Décorer"], a:[0,1,2,3]},
+ {k:"vf", q:"Un système d'information est forcément informatisé.", a:false, e:"Un cahier de notes ou un registre est un SI manuel."},
+ {k:"assoc", q:"Associe chaque situation à la fonction du SI :", p:[["Saisir une note au clavier","Collecter"],["Enregistrer la note dans un fichier","Mémoriser"],["Calculer la moyenne de l'élève","Traiter"],["Imprimer le bulletin","Diffuser"]]},
+ {k:"trous", q:"Un cahier de notes tenu à la main est un système d'information {1}.", bank:["manuel","informatisé"], a:[["manuel"]]},
+ {k:"assoc", q:"Associe chaque élément à la catégorie de ressources :", p:[["Le secrétaire","Humaine"],["Le logiciel de gestion scolaire","Logicielle"],["La règle d'inscription","Procédure"],["L'ordinateur du secrétariat","Matérielle"]]}
+]},
+{t:"Notion de projet", q:[
+ {k:"multi", q:"Quelles sont les caractéristiques d'un projet ?", o:["Un objectif précis","Une durée limitée (début et fin)","Des ressources limitées","Une activité répétitive sans fin"], a:[0,1,2]},
+ {k:"assoc", q:"Projet ou activité courante ?", p:[["Construire un nouveau bloc de salles","Projet"],["Assurer chaque jour l'entretien des salles","Activité courante"],["Informatiser la gestion des notes","Projet"],["Établir chaque mois les bulletins de salaire","Activité courante"]]},
+ {k:"assoc", q:"Associe chaque acteur à son rôle :", p:[["Maître d'ouvrage","Exprime le besoin et finance"],["Maître d'œuvre","Réalise le projet"],["Chef de projet","Planifie, coordonne et suit l'avancement"]]},
+ {k:"trous", q:"Les trois contraintes d'un projet sont le {1}, le {2} et la {3}.", bank:["coût","délai","qualité"], a:[["cout"],["delai"],["qualite"]]},
+ {k:"qcm", q:"Quelle est la première phase d'un projet ?", o:["Clôture","Initialisation","Exécution"], a:1},
+ {k:"vf", q:"Un projet a une date de début et une date de fin.", a:true}
+]},
+{t:"Planification d'un projet", q:[
+ {k:"trous", q:"Date de fin = date de {1} + {2}.", bank:["début","durée","retard"], a:[["debut"],["duree"]]},
+ {k:"qcm", q:"Un jalon est une tâche :", o:["de durée nulle qui marque une étape importante","qui dure toujours une semaine","sans ressource"], a:0},
+ {k:"assoc", q:"Associe chaque situation à la relation entre tâches :", p:[["Peindre seulement après la fin de l'enduit","Fin-début"],["Rédaction et relecture commencent ensemble","Début-début"],["Tests et documentation se terminent ensemble","Fin-fin"]]},
+ {k:"qcm", q:"Une tâche commence au jour 2 et dure 4 jours. Elle se termine au jour :", o:["6","8","2"], a:0},
+ {k:"qcm", q:"Fin prévue au jour 8, fin réelle au jour 11. Le retard est de :", o:["3 jours","8 jours","11 jours"], a:0},
+ {k:"multi", q:"Quelles sont les catégories de ressources d'un projet ?", o:["Humaines","Matérielles","Financières","Imaginaires"], a:[0,1,2]},
+ {k:"qcm", q:"A (3 jours) puis B (2 jours), relation fin-début. Durée totale :", o:["5 jours","3 jours","6 jours"], a:0}
+]},
+{t:"Analyse et évaluation d'un projet avec GanttProject", q:[
+ {k:"assoc", q:"Associe chaque terme à sa définition :", p:[["Diagramme de Gantt","Représentation des tâches sur une échelle de temps"],["Jalon","Tâche de durée nulle"],["Dépendance","Lien qui impose un ordre entre deux tâches"],["Chemin critique","Suite de tâches dont tout retard retarde le projet"]]},
+ {k:"qcm", q:"Quelle est la durée d'un jalon dans GanttProject ?", o:["0 jour","1 jour","Celle du projet"], a:0},
+ {k:"trous", q:"Dans GanttProject, une {1} impose un ordre d'exécution entre deux tâches ; le chemin {2} est la suite de tâches qui ne peuvent pas être retardées.", bank:["dépendance","critique","ressource"], a:[["dependance"],["critique"]]},
+ {k:"vf", q:"Une ressource affectée à deux tâches qui se déroulent en même temps est en surcharge.", a:true},
+ {k:"qcm", q:"T1 (3 j) → T2 (5 j) → T3 (2 j), relations fin-début. Durée du projet :", o:["10 jours","8 jours","5 jours"], a:0},
+ {k:"vf", q:"Une tâche critique a une marge égale à zéro.", a:true}
+]},
+{t:"Description de la structure d'un cahier des charges", q:[
+ {k:"assoc", q:"Classe chaque extrait dans sa rubrique :", p:[["Les notes sont recopiées à la main sur les bulletins","Étude de l'existant"],["Le logiciel devra calculer les moyennes","Expression des besoins"],["Analyse : 5 jours ; développement : 20 jours","Planification des tâches"],["Acquisition de 5 ordinateurs : 1 500 000 FCFA","Évaluation des coûts"]]},
+ {k:"multi", q:"Quels sont les intérêts d'un cahier des charges ?", o:["Formaliser les besoins","Éviter les malentendus entre client et réalisateur","Servir de référence à la réception du projet","Remplacer le logiciel"], a:[0,1,2]},
+ {k:"trous", q:"Le cahier des charges décrit les {1} du client.", bank:["besoins","salaires"], a:[["besoins"]]},
+ {k:"qcm", q:"5 postes de travail à 300 000 FCFA l'unité coûtent :", o:["1 500 000 FCFA","1 200 000 FCFA","305 000 FCFA"], a:0},
+ {k:"vf", q:"Le cahier des charges engage le maître d'ouvrage et le maître d'œuvre.", a:true},
+ {k:"qcm", q:"Dans quelle rubrique trouve-t-on les prix ?", o:["Évaluation des coûts","Étude de l'existant","Expression des besoins"], a:0}
+]},
+{t:"Présentation de MERISE", q:[
+ {k:"qcm", q:"MERISE est :", o:["une méthode de conception de systèmes d'information","un langage de programmation","un logiciel de gestion"], a:0},
+ {k:"trous", q:"Le cycle de vie commence par le schéma {1} et se termine par la {2}.", bank:["directeur","maintenance","réalisation"], a:[["directeur"],["maintenance"]]},
+ {k:"assoc", q:"Associe chaque étape à son rôle :", p:[["Étude préalable","Analyser l'existant et proposer des solutions"],["Étude détaillée","Spécifier précisément la solution retenue"],["Étude technique","Choisir les matériels et logiciels"],["Réalisation","Développer et tester"],["Mise en œuvre","Installer et former les utilisateurs"],["Maintenance","Corriger et faire évoluer"]]},
+ {k:"vf", q:"Un modèle est une copie exacte de la réalité.", a:false, e:"C'est une représentation simplifiée."},
+ {k:"qcm", q:"Quelle étape propose plusieurs solutions possibles ?", o:["L'étude préalable","La réalisation","La maintenance"], a:0},
+ {k:"multi", q:"Pourquoi modéliser un système d'information ?", o:["Mieux comprendre l'organisation","Faciliter la communication","Réduire les erreurs avant la réalisation","Programmer sans réfléchir"], a:[0,1,2]}
+]},
+{t:"Description des niveaux d'analyse de MERISE", q:[
+ {k:"assoc", q:"Associe chaque niveau à sa question :", p:[["Conceptuel","Quoi ?"],["Organisationnel","Qui, où, quand ?"],["Physique","Comment, avec quel matériel ?"]]},
+ {k:"assoc", q:"Classe chaque énoncé dans son niveau :", p:[["Un élève s'inscrit dans une classe","Conceptuel"],["L'inscription est faite par le secrétaire avant 15 h","Organisationnel"],["Les données sont stockées dans une base MySQL","Physique"],["Un enseignant dispense une matière à une classe","Conceptuel"]]},
+ {k:"qcm", q:"Le lycée change de système de gestion de base de données. Quel niveau est concerné ?", o:["Physique","Conceptuel","Organisationnel"], a:0},
+ {k:"qcm", q:"Le lycée change les horaires d'ouverture du secrétariat. Quel niveau est concerné ?", o:["Organisationnel","Physique","Conceptuel"], a:0},
+ {k:"vf", q:"On commence l'analyse par le niveau conceptuel.", a:true}
+]},
+{t:"Présentation du cycle d'abstraction d'un SI selon MERISE", q:[
+ {k:"qcm", q:"Le cycle d'abstraction décrit :", o:["les niveaux conceptuel, organisationnel et physique","les étapes dans le temps","les prix du projet"], a:0},
+ {k:"trous", q:"Le cycle de {1} suit le déroulement dans le temps ; le cycle d'{2} décrit les niveaux de détail.", bank:["vie","abstraction","décision"], a:[["vie"],["abstraction"]]},
+ {k:"assoc", q:"Associe chaque sigle à sa signification :", p:[["MCD","Modèle conceptuel des données"],["MLD","Modèle logique des données"],["MPD","Modèle physique des données"],["MCT","Modèle conceptuel des traitements"]]},
+ {k:"assoc", q:"Classe chaque extrait dans son niveau :", p:[["Entité ÉLÈVE avec matricule et nom","Conceptuel"],["Table ÉLÈVE(matricule, nom)","Logique"],["CREATE TABLE eleve (...) en MySQL","Physique"]]},
+ {k:"vf", q:"Un changement de matériel modifie le modèle conceptuel.", a:false, e:"Seul le niveau physique est modifié."},
+ {k:"qcm", q:"En conception, on va :", o:["du conceptuel vers le physique","du physique vers le conceptuel","on ne suit aucun ordre"], a:0}
+]}
+];
+
+/* ===================== OUTILS ===================== */
+const norm = s => (s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+const el = (h)=>{const d=document.createElement("div");d.innerHTML=h.trim();return d.firstChild;};
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const KEY = "td_premiere_ti_v1";
+let state = {cur:0, res:{}};      // res[i] = {score, max}
+try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s) state=s; }catch(e){}
+const save=()=>{ try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} };
+const maxOf = q => q.k==="trous" ? q.a.length : q.k==="assoc" ? q.p.length : 1;
+
+/* ===================== AFFICHAGE ===================== */
+function nav(){
+  const n=document.getElementById("nav"); n.innerHTML="";
+  L.forEach((l,i)=>{
+    const b=document.createElement("button");
+    b.textContent="L"+(i+1);
+    b.title=l.t;
+    if(i===state.cur) b.classList.add("on");
+    if(state.res[i]) b.classList.add("done");
+    b.onclick=()=>{state.cur=i;save();render();window.scrollTo({top:0,behavior:"smooth"});};
+    n.appendChild(b);
+  });
+}
+
+function render(){
+  nav();
+  const i=state.cur, les=L[i];
+  const root=document.getElementById("lesson"); root.innerHTML="";
+  const card=el(`<div class="card"><h2>Leçon ${i+1} : ${esc(les.t)}</h2><div class="sub">${les.q.length} questions</div><div id="qs"></div>
+    <div class="actions"><button class="btn" id="val">Valider</button><button class="btn sec" id="rst">Recommencer</button></div>
+    <div class="score" id="sc"></div></div>`);
+  root.appendChild(card);
+  const qs=card.querySelector("#qs");
+  les.q.forEach((q,j)=>{
+    let h=`<div class="q" data-j="${j}"><div class="qt">${j+1}. `;
+    if(q.k==="trous"){
+      h+=`Complète la phrase</div>`;
+      if(q.bank) h+=`<div class="bank">Mots à utiliser : ${q.bank.map(esc).join(" · ")}</div>`;
+      h+=`<div>`+q.q.replace(/\{(\d)\}/g,(m,d)=>`<input class="blank" data-b="${d-1}" autocomplete="off" autocapitalize="none" spellcheck="false">`).replace(/'/g,"'")+`</div>`;
+    } else if(q.k==="qcm"){
+      h+=`${esc(q.q)}</div>`+q.o.map((o,x)=>`<label class="opt"><input type="radio" name="q${i}_${j}" value="${x}"><span>${esc(o)}</span></label>`).join("");
+    } else if(q.k==="multi"){
+      h+=`${esc(q.q)} <small>(plusieurs réponses possibles)</small></div>`+q.o.map((o,x)=>`<label class="opt"><input type="checkbox" value="${x}"><span>${esc(o)}</span></label>`).join("");
+    } else if(q.k==="vf"){
+      h+=`${esc(q.q)}</div><label class="opt"><input type="radio" name="q${i}_${j}" value="1"><span>Vrai</span></label><label class="opt"><input type="radio" name="q${i}_${j}" value="0"><span>Faux</span></label>`;
+    } else if(q.k==="assoc"){
+      const rights=[...new Set(q.p.map(p=>p[1]))].sort((a,b)=>a.localeCompare(b,"fr"));
+      h+=`${esc(q.q)}</div>`+q.p.map((p,x)=>`<div class="row"><div>${esc(p[0])}</div><select data-x="${x}"><option value="">— choisir —</option>${rights.map(r=>`<option>${esc(r)}</option>`).join("")}</select></div>`).join("");
+    }
+    h+=`<div class="fb" style="display:none"></div></div>`;
+    qs.appendChild(el(h));
+  });
+  card.querySelector("#val").onclick=()=>validate(i);
+  card.querySelector("#rst").onclick=()=>{delete state.res[i];save();render();bilan();};
+  bilan();
+}
+
+function validate(i){
+  const les=L[i]; let score=0, max=0;
+  const blocks=document.querySelectorAll("#qs .q");
+  les.q.forEach((q,j)=>{
+    const b=blocks[j], fb=b.querySelector(".fb"); let got=0, mx=maxOf(q), ok=false, corr="";
+    b.querySelectorAll(".good,.bad").forEach(x=>x.classList.remove("good","bad"));
+    if(q.k==="qcm"){
+      const c=b.querySelector("input:checked"); const labs=b.querySelectorAll(".opt");
+      if(c && +c.value===q.a){got=1;}
+      labs[q.a].classList.add("good"); if(c && +c.value!==q.a) c.closest(".opt").classList.add("bad");
+      corr="Bonne réponse : "+q.o[q.a];
+    } else if(q.k==="multi"){
+      const labs=[...b.querySelectorAll(".opt")]; const sel=labs.map(l=>l.querySelector("input").checked);
+      const good=q.o.map((_,x)=>q.a.includes(x));
+      if(sel.every((v,x)=>v===good[x])) got=1;
+      labs.forEach((l,x)=>{ if(good[x]) l.classList.add("good"); else if(sel[x]) l.classList.add("bad"); });
+      corr="Bonnes réponses : "+q.a.map(x=>q.o[x]).join(" ; ");
+    } else if(q.k==="vf"){
+      const c=b.querySelector("input:checked"); const labs=b.querySelectorAll(".opt");
+      const good=q.a?0:1;               // index du label correct (Vrai=0, Faux=1)
+      if(c && (c.value==="1")===q.a) got=1;
+      labs[good].classList.add("good"); if(c && (c.value==="1")!==q.a) c.closest(".opt").classList.add("bad");
+      corr="C'est "+(q.a?"vrai":"faux")+"."+(q.e?" "+q.e:"");
+    } else if(q.k==="trous"){
+      const ins=[...b.querySelectorAll(".blank")];
+      ins.forEach((inp,x)=>{ const okb=q.a[x].map(norm).includes(norm(inp.value)); if(okb){got++;inp.classList.add("good");} else inp.classList.add("bad"); });
+      corr="Réponses : "+q.a.map(a=>a[0]).join(" ; ");
+    } else if(q.k==="assoc"){
+      const sels=[...b.querySelectorAll("select")];
+      sels.forEach((s,x)=>{ if(s.value===q.p[x][1]){got++;s.classList.add("good");} else s.classList.add("bad"); });
+      corr="Réponses : "+q.p.map(p=>p[0]+" → "+p[1]).join(" ; ");
+    }
+    ok = got===mx; score+=got; max+=mx;
+    fb.style.display="block"; fb.className="fb"+(ok?" okk":"");
+    fb.textContent = ok ? "✓ Correct" : "✗ "+corr;
+  });
+  state.res[i]={score,max}; save();
+  document.getElementById("sc").textContent=`Ton score : ${score} / ${max}`;
+  nav(); bilan();
+}
+
+function bilan(){
+  const box=document.getElementById("bilan");
+  let rows="",ts=0,tm=0;
+  L.forEach((l,i)=>{ const r=state.res[i]; if(r){ts+=r.score;tm+=r.max;} rows+=`<tr><td>Leçon ${i+1} – ${esc(l.t)}</td><td>${r?r.score+" / "+r.max:"—"}</td></tr>`; });
+  box.innerHTML=`<h2>Bilan</h2><table><tr><th>Leçon</th><th>Score</th></tr>${rows}<tr><th>Total</th><th>${tm?ts+" / "+tm:"—"}</th></tr></table>
+  <div class="actions"><button class="btn" id="csv">Télécharger mes résultats (CSV)</button><button class="btn sec" id="cp">Copier mon résultat</button></div>
+  <p class="sub" id="msg"></p>`;
+  const summary=()=>{
+    const nom=document.getElementById("nom").value.trim()||"(nom non renseigné)", cl=document.getElementById("classe").value.trim();
+    return {nom,cl,txt:`${nom} – ${cl} – TD Première TI : ${tm?ts+"/"+tm:"aucune leçon validée"} (`+L.map((l,i)=>"L"+(i+1)+": "+(state.res[i]?state.res[i].score+"/"+state.res[i].max:"-")).join(", ")+")"};
+  };
+  box.querySelector("#cp").onclick=async()=>{
+    const s=summary().txt; try{await navigator.clipboard.writeText(s);msg("Résultat copié. Envoie-le à ton enseignant.");}catch(e){msg(s);}
+  };
+  box.querySelector("#csv").onclick=()=>{
+    const s=summary(); const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+    let c="﻿Nom;Classe;"+L.map((_,i)=>"L"+(i+1)).join(";")+";Total\n";
+    c+=[q(s.nom),q(s.cl),...L.map((_,i)=>state.res[i]?state.res[i].score+"/"+state.res[i].max:""),tm?ts+"/"+tm:""].join(";")+"\n";
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([c],{type:"text/csv;charset=utf-8"}));
+    a.download="resultats_TD_premiere_TI.csv"; a.click(); msg("Fichier téléchargé. Envoie-le à ton enseignant.");
+  };
+  function msg(t){document.getElementById("msg").textContent=t;}
+}
+
+["nom","classe"].forEach(id=>{ const e=document.getElementById(id); e.value=localStorage.getItem(KEY+id)||e.value; e.oninput=()=>{try{localStorage.setItem(KEY+id,e.value);}catch(x){}}; });
+render();
+</script>
+</body>
+</html>
